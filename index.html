@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Football Analytics</title>
+  <style>
+    /* CSS Variables for easy theme switching */
+    :root {
+      --bg-color: #f4f7f6;
+      --sidebar-bg: #1a202c;
+      --card-bg: #ffffff;
+      --text-main: #333333;
+      --text-sidebar: #ffffff;
+      --accent-color: #3b82f6;
+    }
+
+    /* Dark Theme Overrides */
+    body.dark-theme {
+      --bg-color: #0f172a;
+      --sidebar-bg: #020617;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+    }
+    
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Styling */
+    .sidebar {
+      background-color: var(--sidebar-bg);
+      color: var(--text-sidebar);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h2 { margin-top: 0; }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-sidebar);
+      text-align: left;
+      padding: 10px;
+      width: 100%;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      transition: background 0.2s;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Main Content Styling */
+    .main-content {
+      padding: 2rem;
+    }
+
+    .header-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    /* Action Buttons */
+    .btn {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover { opacity: 0.9; }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    /* Grid & Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover { transform: translateY(-5px); }
+    
+    .data-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin: 10px 0 0 0;
+      color: var(--accent-color);
+    }
+
+    /* Utility Class for Javascript Tabs */
+    .hidden { display: none; }
+
+    @media (max-width: 768px) {
+      .dashboard-container { grid-template-columns: 1fr; }
+      .header-controls { flex-direction: column; gap: 1rem; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <h2>Team Control</h2>
+      <button class="nav-btn active" data-target="overview-section">Overview</button>
+      <button class="nav-btn" data-target="player-section">Player Data</button>
+      
+      <div style="margin-top: auto;">
+        <button id="theme-toggle" class="btn btn-outline" style="width: 100%;">Toggle Dark Mode</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="header-controls">
+        <h1>Manchester City Analytics</h1>
+        <button id="refresh-data" class="btn">Refresh Live Data</button>
+      </div>
+
+      <section id="overview-section" class="content-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Goals Scored</h3>
+            <p class="data-value" id="stat-goals">84</p>
+          </div>
+          <div class="stat-card">
+            <h3>Possession Avg</h3>
+            <p class="data-value" id="stat-possession">64%</p>
+          </div>
+          <div class="stat-card">
+            <h3>Pass Accuracy</h3>
+            <p class="data-value" id="stat-passes">89%</p>
+          </div>
+          <div class="stat-card">
+            <h3>Clean Sheets</h3>
+            <p class="data-value" id="stat-cleansheets">15</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="player-section" class="content-section hidden">
+        <div class="stat-card">
+          <h2>Top Scorer</h2>
+          <p>Erling Haaland - 25 Goals</p>
+          <p>Kevin De Bruyne - 12 Assists</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // --- 1. DARK MODE TOGGLE LOGIC ---
+    const themeBtn = document.getElementById('theme-toggle');
+    
+    themeBtn.addEventListener('click', () => {
+      // This adds or removes the 'dark-theme' class on the body tag
+      document.body.classList.toggle('dark-theme');
+    });
+
+    // --- 2. TABBED NAVIGATION LOGIC ---
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    navButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Remove 'active' class from all buttons
+        navButtons.forEach(btn => btn.classList.remove('active'));
+        // Add 'active' to the clicked button
+        button.classList.add('active');
+
+        // Hide all sections
+        contentSections.forEach(section => section.classList.add('hidden'));
+        
+        // Show the target section using the data-target attribute
+        const targetId = button.getAttribute('data-target');
+        document.getElementById(targetId).classList.remove('hidden');
+      });
+    });
+
+    // --- 3. SIMULATE DATA REFRESH LOGIC ---
+    const refreshBtn = document.getElementById('refresh-data');
+    
+    // Grab the elements where the numbers live
+    const goalsText = document.getElementById('stat-goals');
+    const possText = document.getElementById('stat-possession');
+    
+    refreshBtn.addEventListener('click', () => {
+      // Temporarily change text to show it's "loading"
+      refreshBtn.innerText = "Loading...";
+      
+      // Use setTimeout to simulate network delay (0.5 seconds)
+      setTimeout(() => {
+        // Generate random numbers to simulate new data
+        const newGoals = Math.floor(Math.random() * (100 - 70) + 70);
+        const newPoss = Math.floor(Math.random() * (75 - 50) + 50);
+        
+        // Update the HTML with the new data
+        goalsText.innerText = newGoals;
+        possText.innerText = newPoss + "%";
+        
+        // Reset button text
+        refreshBtn.innerText = "Refresh Live Data";
+      }, 500); // 500 milliseconds = half a second
+    });
+  </script>
+</body>
+</html>
